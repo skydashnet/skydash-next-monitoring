@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const helmet = require('helmet');
 const WebSocket = require('ws');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -11,7 +12,6 @@ const { startWhatsApp } = require('./src/services/whatsappService');
 const { handleCommand } = require('./src/bot/commandHandler');
 const { generateAndSendDailyReports } = require('./src/bot/reportGenerator');
 const { logAllActiveWorkspaces } = require('./src/bot/dataLogger');
-
 
 let RouterOSAPI = require('node-routeros');
 if (RouterOSAPI.RouterOSAPI) {
@@ -35,9 +35,10 @@ const deviceRoutes = require('./src/routes/deviceRoutes');
 const ipPoolRoutes = require('./src/routes/ipPoolRoutes');
 const botRoutes = require('./src/routes/botRoutes');
 
-
 const app = express();
 const server = http.createServer(app);
+
+app.use(helmet());
 
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(express.json());
@@ -163,11 +164,12 @@ wss.on('connection', async (ws, req) => {
     }
 });
 
-
 const PORT = process.env.PORT || 9494;
 server.listen(PORT, () => {
     console.log(`Server backend berjalan di port ${PORT}`);
+    
     cron.schedule('* * * * *', logAllActiveWorkspaces);
+
     cron.schedule('0 0 * * *', generateAndSendDailyReports, {
         timezone: "Asia/Jakarta"
     });
