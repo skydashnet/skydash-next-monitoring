@@ -7,7 +7,7 @@
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
   </a>
   <a href="#">
-    <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version">
+    <img src="https://img.shields.io/badge/version-1.5.8-green.svg" alt="Version">
   </a>
   <a href="#">
     <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
