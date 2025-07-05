@@ -16,6 +16,11 @@ const config: Config = {
       },
     },
     extend: {
+      // --- TAMBAHKAN BLOK `boxShadow` DI SINI ---
+      boxShadow: {
+        'glow-red': '0 0 20px 0 rgba(239, 68, 68, 0.4)',
+        'glow-blue': '0 0 20px 0 rgba(59, 130, 246, 0.4)',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

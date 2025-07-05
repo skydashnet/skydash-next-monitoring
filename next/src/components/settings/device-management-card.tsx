@@ -14,6 +14,7 @@ const DeviceManagementCard = () => {
     const [activeDeviceId, setActiveDeviceId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
+    
     const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deviceToProcess, setDeviceToProcess] = useState<Device | null>(null);
@@ -68,7 +69,7 @@ const DeviceManagementCard = () => {
     };
     
     const handleDeleteConfirm = async () => {
-        if (!deviceToProcess) return;
+        if (!deviceToProcess?.id) return;
         setIsActionLoading(true);
         try {
             await fetch(`http://localhost:9494/api/devices/${deviceToProcess.id}`, { 
@@ -128,7 +129,7 @@ const DeviceManagementCard = () => {
                                         <CheckCircle size={14} /> Aktif
                                     </span>
                                 ) : (
-                                    <Button onClick={() => handleSetActive(device.id)} disabled={isActionLoading} variant="outline" className="text-xs h-auto py-1 px-2">Jadikan Aktif</Button>
+                                    <Button onClick={() => { if (device.id) { handleSetActive(device.id) } }} disabled={isActionLoading || !device.id} variant="outline" className="text-xs h-auto py-1 px-2">Jadikan Aktif</Button>
                                 )}
                                 <div className="flex gap-1">
                                     <button onClick={() => handleEditClick(device)} className="p-2 rounded-md hover:bg-muted" title="Edit"><Edit size={16} /></button>

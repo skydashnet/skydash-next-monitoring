@@ -6,6 +6,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { useMikrotik } from '@/components/providers/mikrotik-provider';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -45,7 +46,7 @@ const MainContent = () => {
 
   const activeInterfaces = useMemo(() => {
     if (!traffic) return [];
-    
+
     return Object.keys(traffic)
       .filter(key => {
         const currentTraffic = traffic[key];
@@ -70,15 +71,23 @@ const MainContent = () => {
         activeInterfaces.map((etherId, index) => {
           const isLastItem = index === activeInterfaces.length - 1;
           const isOddCount = activeInterfaces.length % 2 !== 0;
-          
+          const currentTraffic = traffic[etherId];
+          const txBps = parseFloat(currentTraffic?.['tx-bits-per-second'] || '0');
+          const rxBps = parseFloat(currentTraffic?.['rx-bits-per-second'] || '0');
+          const glowClass = txBps > rxBps ? 'shadow-glow-red' : 'shadow-glow-blue';
+
           return (
             <Card 
               key={etherId} 
-              className={isOddCount && isLastItem ? 'md:col-span-2' : ''}
+              className={cn(
+                'transition-all duration-500',
+                isOddCount && isLastItem ? 'md:col-span-2' : '',
+                (txBps > 100000 || rxBps > 100000) && glowClass
+              )}
             >
               <CardHeader><CardTitle>{etherId.toUpperCase()}</CardTitle></CardHeader>
               <CardContent className="h-80">
-                  <EtherChart trafficData={traffic[etherId]} />
+                  <EtherChart trafficData={currentTraffic} />
               </CardContent>
             </Card>
           );
