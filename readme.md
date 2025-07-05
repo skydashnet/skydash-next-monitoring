@@ -1,9 +1,5 @@
 # Skydash.NET
 
-<p align="center">
-  <img src="https://i.imgur.com/your-project-logo.png" alt="Skydash.NET Logo" width="150"/>
-</p>
-
 <h3 align="center">A modern, web-based dashboard for monitoring and managing MikroTik routers.</h3>
 
 <p align="center">
