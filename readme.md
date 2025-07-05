@@ -3,7 +3,7 @@
 <h3 align="center">A modern, web-based dashboard for monitoring and managing MikroTik routers.</h3>
 
 <p align="center">
-  <a href="https://github.com/your-username/skydash.net/blob/main/LICENSE">
+  <a href="https://github.com/skydashnet/skydash-next-monitoring/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
   </a>
   <a href="#">
@@ -111,11 +111,12 @@ Follow these instructions to get a copy of the project up and running on your lo
     ```
     The application will be accessible at `http://localhost:3000`.
 
+For more Guide. please visit wiki at (https://github.com/skydashnet/skydash-next-monitoring/wiki)
 ---
 
 ### 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/your-username/skydash.net/issues).
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/skydashnet/skydash-next-monitoring/issues).
 
 1.  **Fork** the Project
 2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
