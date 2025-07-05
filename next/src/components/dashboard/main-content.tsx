@@ -65,12 +65,15 @@ const MainContent = () => {
     );
   }
 
+  const itemCount = activeInterfaces.length;
+  const gridLayoutClass = itemCount >= 3 ? 'md:grid-cols-2' : 'md:grid-cols-1';
+
   return (
-    <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className={cn("flex-grow grid grid-cols-1 gap-6", gridLayoutClass)}>
       {activeInterfaces.length > 0 ? (
         activeInterfaces.map((etherId, index) => {
-          const isLastItem = index === activeInterfaces.length - 1;
-          const isOddCount = activeInterfaces.length % 2 !== 0;
+          const isLastAndOdd = (index === itemCount - 1) && (itemCount % 2 !== 0) && (itemCount >= 3);
+          
           const currentTraffic = traffic[etherId];
           const txBps = parseFloat(currentTraffic?.['tx-bits-per-second'] || '0');
           const rxBps = parseFloat(currentTraffic?.['rx-bits-per-second'] || '0');
@@ -81,7 +84,7 @@ const MainContent = () => {
               key={etherId} 
               className={cn(
                 'transition-all duration-500',
-                isOddCount && isLastItem ? 'md:col-span-2' : '',
+                isLastAndOdd && 'md:col-span-2',
                 (txBps > 100000 || rxBps > 100000) && glowClass
               )}
             >
