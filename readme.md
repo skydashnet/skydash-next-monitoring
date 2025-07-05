@@ -56,7 +56,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 * [Node.js](https://nodejs.org/) (v18 or later)
 * [MySQL](https://www.mysql.com/) or MariaDB
-* A running MikroTik device accessible from the backend server.
+* A RouterOS 7.xx version
 * A dedicated WhatsApp number for the bot.
 
 #### Backend Setup
