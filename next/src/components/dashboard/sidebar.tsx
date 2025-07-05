@@ -9,12 +9,14 @@ import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip);
 
-const InfoRow = ({ label, value }: { label: string, value: string }) => (
-  <div className="flex justify-between items-center text-sm">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-semibold text-foreground text-right">{value}</span>
-  </div>
-);
+const formatBytes = (bytes: number, decimals = 2) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 const formatUptime = (uptimeStr: string) => {
   if (!uptimeStr) return '...';
@@ -53,10 +55,13 @@ const Sidebar = () => {
   const cpuLoad = parseInt(resource['cpu-load'] || '0', 10);
   const totalMemory = parseInt(resource['total-memory'] || '1', 10);
   const freeMemory = parseInt(resource['free-memory'] || '0', 10);
-  const ramUsage = totalMemory > 0 ? Math.round(((totalMemory - freeMemory) / totalMemory) * 100) : 0;
+  const usedMemory = totalMemory - freeMemory;
+  const ramUsage = totalMemory > 0 ? Math.round((usedMemory / totalMemory) * 100) : 0;
+  
   const totalDisk = parseInt(resource['total-hdd-space'] || '1', 10);
   const freeDisk = parseInt(resource['free-hdd-space'] || '0', 10);
-  const diskUsage = totalDisk > 0 ? Math.round(((totalDisk - freeDisk) / totalDisk) * 100) : 0;
+  const usedDisk = totalDisk - freeDisk;
+  const diskUsage = totalDisk > 0 ? Math.round((usedDisk / totalDisk) * 100) : 0;
   
   const chartOptions: any = { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { tooltip: { enabled: false } } };
   const cpuChartData = { datasets: [{ data: [cpuLoad, 100 - cpuLoad], backgroundColor: ['#8b5cf6', '#374151'], borderWidth: 0 }] };
@@ -68,8 +73,14 @@ const Sidebar = () => {
       <Card className="h-full">
         <CardHeader><CardTitle>Info Perangkat</CardTitle></CardHeader>
         <CardContent className="space-y-6">
-            <InfoRow label="Board Name" value={resource['board-name'] || '...'} />
-            <InfoRow label="OS Version" value={resource.version || '...'} />
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Board Name</p>
+              <p className="font-semibold text-foreground">{resource['board-name'] || '...'}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">OS Version</p>
+              <p className="font-semibold text-foreground">{resource.version || '...'}</p>
+            </div>
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Uptime</p>
               <p className="font-semibold text-foreground">{formatUptime(resource.uptime)}</p>
@@ -84,14 +95,16 @@ const Sidebar = () => {
                     </div>
                 </div>
                 <div>
-                    <h4 className="font-semibold text-muted-foreground mb-2">RAM Usage</h4>
+                    <h4 className="font-semibold text-muted-foreground">RAM Usage</h4>
+                    <p className="text-xs text-muted-foreground -mt-1 mb-2">{formatBytes(usedMemory)} / {formatBytes(totalMemory)}</p>
                     <div className="relative h-28 w-28 mx-auto">
                         <Doughnut data={ramChartData} options={chartOptions} />
                         <div className="absolute inset-0 flex items-center justify-center font-bold text-xl">{ramUsage}%</div>
                     </div>
                 </div>
                 <div>
-                    <h4 className="font-semibold text-muted-foreground mb-2">Disk Usage</h4>
+                    <h4 className="font-semibold text-muted-foreground">Disk Usage</h4>
+                     <p className="text-xs text-muted-foreground -mt-1 mb-2">{formatBytes(usedDisk)} / {formatBytes(totalDisk)}</p>
                     <div className="relative h-28 w-28 mx-auto">
                         <Doughnut data={diskChartData} options={chartOptions} />
                         <div className="absolute inset-0 flex items-center justify-center font-bold text-xl">{diskUsage}%</div>
