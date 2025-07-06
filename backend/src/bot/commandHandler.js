@@ -18,6 +18,7 @@ Berikut adalah daftar perintah yang tersedia:
 
 *Manajemen Aset & Lokasi*
 • \`.cek <nama_user_pppoe>\` - Cek lokasi ODP tempat user terhubung.
+• \`.odp total\` - Lihat total dan daftar semua ODP.
 • \`.odp <nama_odp>\` - Lihat detail ODP & pengguna terhubung.
 
 *Manajemen Pengguna*
@@ -26,6 +27,35 @@ Berikut adalah daftar perintah yang tersedia:
 • \`.kick <pppoe|hotspot> <nama>\` - Putuskan koneksi user aktif.
 `
 };
+
+async function handleOdpTotal(from, workspaceId) {
+    try {
+        const [odpAssets] = await pool.query(
+            "SELECT name, description FROM network_assets WHERE workspace_id = ? AND type = 'ODP' ORDER BY name ASC",
+            [workspaceId]
+        );
+
+        if (odpAssets.length === 0) {
+            return sendWhatsAppMessage(from, "ℹ️ Tidak ada aset ODP yang ditemukan di workspace ini.");
+        }
+
+        let reply = `*Total ODP Terdaftar: ${odpAssets.length}*\n\n`;
+        reply += "Berikut adalah daftar ODP beserta keterangannya:\n\n";
+
+        const odpList = odpAssets.map(odp => {
+            const description = odp.description ? `_${odp.description}_` : "_Tidak ada keterangan_";
+            return `📍 *${odp.name}*\n   ${description}`;
+        }).join('\n\n');
+
+        reply += odpList;
+
+        await sendWhatsAppMessage(from, reply);
+
+    } catch (error) {
+        console.error("[handleOdpTotal] Database error:", error);
+        await sendWhatsAppMessage(from, templates.error);
+    }
+}
 
 async function handlePing(from, user) {
     await sendWhatsAppMessage(from, `Pong! 🏓\nDasbor untuk workspace *${user.workspace_name}* aktif dan terhubung!`);
@@ -146,8 +176,14 @@ const handleCommand = async (message, from, user) => {
                 await handleGetLogs(from, user.workspace_id, args[1]);
                 break;
             case 'odp':
-                if (!args[1]) return sendWhatsAppMessage(from, "Format salah. Contoh: `.odp NAMA-ODP-NYA`");
-                await handleAssetDetail(from, user.workspace_id, args.slice(1).join(' '));
+                if (!args[1]) {
+                    return sendWhatsAppMessage(from, "Format salah. Contoh: `.odp total` atau `.odp <nama_odp>`");
+                }
+                if (args[1].toLowerCase() === 'total') {
+                    await handleOdpTotal(from, user.workspace_id);
+                } else {
+                    await handleAssetDetail(from, user.workspace_id, args.slice(1).join(' '));
+                }
                 break;
             case 'disable':
             case 'enable':

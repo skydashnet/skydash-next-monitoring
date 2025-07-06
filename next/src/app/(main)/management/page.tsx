@@ -19,7 +19,8 @@ const ManagementPage = () => {
   const fetchSummary = useCallback(async () => {
     setLoading(true);
     try {
-        const response = await fetch('http://localhost:9494/api/pppoe/summary', { credentials: 'include' });
+        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const response = await fetch(`${apiUrl}/api/pppoe/summary`, { credentials: 'include' });
         if (!response.ok) throw new Error('Gagal mengambil data summary.');
         const data = await response.json();
         setSummary(data);

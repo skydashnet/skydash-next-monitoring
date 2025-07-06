@@ -7,6 +7,7 @@ import DangerZoneCard from '@/components/settings/danger-zone-card';
 import DeviceManagementCard from '@/components/settings/device-management-card';
 import ActiveSessionsCard from '@/components/settings/active-sessions-card';
 import WhatsappBotCard from '@/components/settings/whatsapp-bot-card';
+import JoinWorkspaceCard from '@/components/settings/join-workspace-card';
 
 const SettingsPage = () => {
   return (
@@ -27,6 +28,7 @@ const SettingsPage = () => {
       <section className="space-y-6">
         <h2 className="text-xl font-semibold text-primary border-b pb-2">Perangkat & Konektivitas</h2>
         <DeviceManagementCard />
+        <JoinWorkspaceCard />
         <WhatsappBotCard />
       </section>
       

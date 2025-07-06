@@ -34,7 +34,8 @@ export const MikrotikProvider = ({ children }: { children: React.ReactNode }) =>
         }
 
         if (!ws.current) {
-            const socket = new WebSocket('ws://localhost:9494/ws');
+            const wsUrl = process.env.NEXT_PUBLIC_WS_BASE_URL;
+            const socket = new WebSocket(`${wsUrl}`);
             ws.current = socket;
 
             socket.onopen = () => {

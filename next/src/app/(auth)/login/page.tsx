@@ -25,7 +25,8 @@ const LoginPage = () => {
     const data = Object.fromEntries(formData.entries());
 
     try {
-      const res = await fetch('http://localhost:9494/api/auth/login', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const res = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

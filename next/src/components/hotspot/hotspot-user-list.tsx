@@ -28,11 +28,12 @@ const HotspotUserList = ({ refreshTrigger, onActionComplete }: HotspotUserListPr
   const [loading, setLoading] = useState(true);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<HotspotUser | null>(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:9494/api/hotspot/users', { credentials: 'include' });
+      const res = await fetch(`${apiUrl}/api/hotspot/users`, { credentials: 'include' });
       if (!res.ok) throw new Error("Gagal mengambil daftar user hotspot.");
       const data = await res.json();
       setAllUsers(data);
@@ -52,12 +53,12 @@ const HotspotUserList = ({ refreshTrigger, onActionComplete }: HotspotUserListPr
         case 'kick':
             const activeUser = hotspotActive.find((u: any) => u.user === user.name);
             if(!activeUser || !activeUser['.id']) return alert("User tidak aktif, tidak bisa di-kick.");
-            url = `http://localhost:9494/api/hotspot/active/${activeUser['.id']}/kick`;
+            url = `${apiUrl}/api/hotspot/active/${activeUser['.id']}/kick`;
             options.method = 'POST';
             break;
         case 'enable':
         case 'disable':
-            url = `http://localhost:9494/api/hotspot/users/${user['.id']}/status`;
+            url = `${apiUrl}/api/hotspot/users/${user['.id']}/status`;
             options.method = 'PUT';
             options.headers = { 'Content-Type': 'application/json' };
             options.body = JSON.stringify({ disabled: action === 'disable' });
@@ -77,7 +78,7 @@ const HotspotUserList = ({ refreshTrigger, onActionComplete }: HotspotUserListPr
 
   const handleDeleteConfirm = async () => {
     if (!userToDelete) return;
-    const url = `http://localhost:9494/api/hotspot/users/${userToDelete['.id']}`;
+    const url = `${apiUrl}/api/hotspot/users/${userToDelete['.id']}`;
     try {
         const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
         if(!res.ok) throw new Error("Gagal menghapus user.");

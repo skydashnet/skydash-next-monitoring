@@ -27,11 +27,11 @@ const ActiveSessionsCard = () => {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
     const [sessionToLogout, setSessionToLogout] = useState<Session | null>(null);
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     const fetchSessions = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:9494/api/sessions', { credentials: 'include' });
+            const res = await fetch(`${apiUrl}/api/sessions`, { credentials: 'include' });
             const data = await res.json();
             if (!res.ok) throw new Error('Gagal memuat sesi.');
             setSessions(data);
@@ -49,11 +49,11 @@ const ActiveSessionsCard = () => {
     const handleLogoutSession = async () => {
         if (!sessionToLogout) return;
         try {
-            await fetch(`http://localhost:9494/api/sessions/${sessionToLogout.id}`, {
+            await fetch(`${apiUrl}/api/sessions/${sessionToLogout.id}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
-            fetchSessions(); // Refresh list
+            fetchSessions();
         } catch (error) {
             alert('Gagal menghentikan sesi.');
         } finally {

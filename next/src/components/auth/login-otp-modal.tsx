@@ -33,7 +33,8 @@ const LoginOtpModal: React.FC<LoginOtpModalProps> = ({ isOpen, onClose, userId, 
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:9494/api/auth/login/verify', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const res = await fetch(`${apiUrl}/api/auth/login/verify`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

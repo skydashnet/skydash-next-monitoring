@@ -1,5 +1,5 @@
 const pool = require('../config/database');
-const { runCommandForWorkspace } = require('../utils/apiConnection');
+const { runCommandForWorkspace, getOrCreateConnection} = require('../utils/apiConnection');
 const { sendWhatsAppMessage } = require('../services/whatsappService');
 
 const alarmState = new Map();
@@ -75,63 +75,107 @@ async function processSlaEvents(workspaceId, currentActiveUsers) {
     }
 }
 
+async function logPppoeUsage(workspaceId, client) {
+    try {
+        const allQueues = await client.write('/queue/simple/print');
+        if (!allQueues || allQueues.length === 0) return;
+
+        const today = new Date().toISOString().slice(0, 10);
+
+        for (const queue of allQueues) {
+            let userName = queue.name;
+            if (userName.startsWith('<pppoe-') && userName.endsWith('>')) {
+                userName = userName.substring(7, userName.length - 1);
+            }
+
+            const [uploadBytesStr, downloadBytesStr] = (queue.bytes || '0/0').split('/');
+            const uploadBytes = BigInt(uploadBytesStr);
+            const downloadBytes = BigInt(downloadBytesStr);
+
+            if (uploadBytes === 0n && downloadBytes === 0n) continue;
+
+            const totalBytes = uploadBytes + downloadBytes;
+
+            const sql = `
+                INSERT INTO pppoe_usage_logs (workspace_id, pppoe_user, usage_date, upload_bytes, download_bytes, total_bytes)
+                VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
+                upload_bytes = VALUES(upload_bytes), download_bytes = VALUES(download_bytes), total_bytes = VALUES(total_bytes);
+            `;
+            await pool.query(sql, [
+                workspaceId, userName, today,
+                uploadBytes.toString(), downloadBytes.toString(), totalBytes.toString(),
+                uploadBytes.toString(), downloadBytes.toString(), totalBytes.toString()
+            ]);
+        }
+    } catch (error) {
+        console.error(`[Usage Logger] Gagal mencatat pemakaian untuk workspace ${workspaceId}:`, error.message);
+        throw error;
+    }
+}
+
 async function logAllActiveWorkspaces() {
-    console.log(`[Scheduler] Menjalankan tugas data logger & alarm...`);
     try {
         const [workspaces] = await pool.query(`
-            SELECT d.*, w.id as workspace_id, w.main_interface 
-            FROM mikrotik_devices d 
-            JOIN workspaces w ON d.id = w.active_device_id
+            SELECT id as workspace_id, main_interface FROM workspaces WHERE active_device_id IS NOT NULL
         `);
         
         for (const workspace of workspaces) {
-            await checkAlarms(workspace.workspace_id, workspace);
+            try {
+                const CRON_TIMEOUT = 10 * 60 * 1000;
+                const client = await getOrCreateConnection(workspace.workspace_id, CRON_TIMEOUT);
+                
+                await Promise.all([
+                    logPppoeUsage(workspace.workspace_id, client),
+                    logMainInterfaceTraffic(workspace.workspace_id, client, workspace)
+                ]);
 
-            const [activePppoe, activeHotspot] = await Promise.all([
-                runCommandForWorkspace(workspace.workspace_id, '/ppp/active/print').catch(() => []),
-                runCommandForWorkspace(workspace.workspace_id, '/ip/hotspot/active/print').catch(() => [])
-            ]);
-
-            await processSlaEvents(workspace.workspace_id, activePppoe);
-
-            if (workspace.main_interface) {
-                try {
-                    const result = await runCommandForWorkspace(workspace.workspace_id, '/interface/monitor-traffic', [`=interface=${workspace.main_interface}`, '=once=']).then(r => r[0]);
-                    
-                    if (result) {
-                        const workspaceKey = `${workspace.workspace_id}-${result.name}`;
-                        const lastData = lastTrafficData.get(workspaceKey);
-                        const currentTx = parseInt(result['tx-bytes'], 10) || 0;
-                        const currentRx = parseInt(result['rx-bytes'], 10) || 0;
-                        let txUsage = 0;
-                        let rxUsage = 0;
-                        if (lastData) {
-                            txUsage = currentTx - lastData.tx;
-                            rxUsage = currentRx - lastData.rx;
-                        }
-                        lastTrafficData.set(workspaceKey, { tx: currentTx, rx: currentRx });
-                        if (lastData) {
-                            const logValues = [[
-                                workspace.workspace_id,
-                                result.name,
-                                currentTx,
-                                currentRx,
-                                txUsage,
-                                rxUsage,
-                                activePppoe.length,
-                                activeHotspot.length
-                            ]];
-                            const sql = 'INSERT INTO traffic_logs (workspace_id, interface_name, tx_bytes, rx_bytes, tx_usage, rx_usage, active_users_pppoe, active_users_hotspot) VALUES ?';
-                            await pool.query(sql, [logValues]);
-                        }
-                    }
-                } catch (monitorError) {
-                    console.error(`Gagal memonitor interface ${workspace.main_interface}:`, monitorError.message);
-                }
+            } catch(e) {
+                console.error(`Gagal memproses workspace ${workspace.workspace_id}:`, e.message);
             }
         }
     } catch (error) {
-        console.error("[Data Logger] Error fatal:", error);
+        console.error("[Data Logger] Error fatal saat mengambil daftar workspace:", error);
+    }
+}
+
+async function logMainInterfaceTraffic(workspaceId, client, workspaceConfig) {
+    if (!workspaceConfig.main_interface) return;
+
+    try {
+        const [interfaceData] = await client.write('/interface/print', [`?name=${workspaceConfig.main_interface}`]);
+        if (!interfaceData) return;
+
+        const workspaceKey = `${workspaceId}-${interfaceData.name}`;
+        const lastData = lastTrafficData.get(workspaceKey);
+
+        const currentTx = parseInt(interfaceData['tx-byte'], 10) || 0;
+        const currentRx = parseInt(interfaceData['rx-byte'], 10) || 0;
+
+        let txUsage = 0;
+        let rxUsage = 0;
+
+        if (lastData) {
+            txUsage = (currentTx < lastData.tx) ? currentTx : currentTx - lastData.tx;
+            rxUsage = (currentRx < lastData.rx) ? currentRx : currentRx - lastData.rx;
+        }
+
+        lastTrafficData.set(workspaceKey, { tx: currentTx, rx: currentRx });
+
+        if (lastData && (txUsage > 0 || rxUsage > 0)) {
+            const [activePppoe, activeHotspot] = await Promise.all([
+                client.write('/ppp/active/print').then(r => r.length),
+                client.write('/ip/hotspot/active/print').then(r => r.length)
+            ]);
+            const sql = 'INSERT INTO traffic_logs (workspace_id, interface_name, tx_bytes, rx_bytes, tx_usage, rx_usage, active_users_pppoe, active_users_hotspot) VALUES ?';
+            const logValues = [[
+                workspaceId, interfaceData.name, currentTx, currentRx, txUsage, rxUsage, activePppoe, activeHotspot
+            ]];
+
+            await pool.query(sql, [logValues]);
+        }
+    } catch (error) {
+        console.error(`[Traffic Logger] Gagal memonitor interface ${workspaceConfig.main_interface}:`, error.message);
+        throw error;
     }
 }
 

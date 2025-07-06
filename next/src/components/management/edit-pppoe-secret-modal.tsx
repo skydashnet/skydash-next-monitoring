@@ -17,13 +17,14 @@ const EditPppoeSecretModal = ({ isOpen, onClose, onSuccess, secretToEdit }: Edit
   const [profiles, setProfiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     if (isOpen && secretToEdit) {
       setFormData({ password: '', profile: secretToEdit.profile });
       const fetchProfiles = async () => {
         try {
-          const res = await fetch('http://localhost:9494/api/pppoe/profiles', { credentials: 'include' });
+          const res = await fetch(`${apiUrl}/api/pppoe/profiles`, { credentials: 'include' });
           if (!res.ok) throw new Error('Gagal memuat profil');
           const data = await res.json();
           setProfiles(data);
@@ -43,7 +44,7 @@ const EditPppoeSecretModal = ({ isOpen, onClose, onSuccess, secretToEdit }: Edit
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`http://localhost:9494/api/pppoe/secrets/${secretToEdit['.id']}`, {
+      const res = await fetch(`${apiUrl}/api/pppoe/secrets/${secretToEdit['.id']}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -13,13 +13,13 @@ const WhatsappBotCard = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const [workspaceRes, interfacesRes] = await Promise.all([
-                fetch('http://localhost:9494/api/workspaces/me', { credentials: 'include' }),
-                fetch('http://localhost:9494/api/workspaces/interfaces', { credentials: 'include' })
+                fetch(`${apiUrl}/api/workspaces/me`, { credentials: 'include' }),
+                fetch(`${apiUrl}/api/workspaces/interfaces`, { credentials: 'include' })
             ]);
 
             const workspaceData = await workspaceRes.json();
@@ -49,7 +49,7 @@ const WhatsappBotCard = () => {
     const handleToggle = async (checked: boolean) => {
         setIsEnabled(checked);
         try {
-            await fetch('http://localhost:9494/api/bot/toggle', {
+            await fetch(`${apiUrl}/api/bot/toggle`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -64,7 +64,7 @@ const WhatsappBotCard = () => {
     const handleSaveInterface = async () => {
         setSaving(true);
         try {
-            await fetch('http://localhost:9494/api/workspaces/set-main-interface', {
+            await fetch(`${apiUrl}/api/workspaces/set-main-interface`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -81,7 +81,7 @@ const WhatsappBotCard = () => {
 const handleSendTest = async () => {
         setTesting(true);
         try {
-            const res = await fetch('http://localhost:9494/api/bot/test-report', {
+            const res = await fetch(`${apiUrl}/api/bot/test-report`, {
                 method: 'POST',
                 credentials: 'include',
             });

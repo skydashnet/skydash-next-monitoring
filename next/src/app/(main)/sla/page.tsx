@@ -23,7 +23,8 @@ const SlaPage = () => {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:9494/api/pppoe/secrets?disabled=false', { credentials: 'include' });
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const res = await fetch(`${apiUrl}/api/pppoe/secrets?disabled=false`, { credentials: 'include' });
       if (!res.ok) throw new Error("Gagal mengambil daftar pengguna PPPoE.");
       const data = await res.json();
       setAllUsers(data);
@@ -39,12 +40,12 @@ const SlaPage = () => {
   }, [fetchUsers]);
 
   const filteredUsers = useMemo(() => {
-    if (!searchTerm) {
-      return allUsers;
-    }
-    return allUsers.filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const usersToDisplay = allUsers.filter(user =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    usersToDisplay.sort((a, b) => a.name.localeCompare(b.name));
+
+    return usersToDisplay;
   }, [allUsers, searchTerm]);
 
   const handleOpenModal = (userName: string) => {

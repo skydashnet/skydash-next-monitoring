@@ -23,7 +23,7 @@ const IpPoolManagerModal = ({ isOpen, onClose }: IpPoolManagerModalProps) => {
   const [profiles, setProfiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [formData, setFormData] = useState({ profile_name: '', gateway: '', ip_start: '', ip_end: '' });
 
   const fetchData = async () => {
@@ -31,8 +31,8 @@ const IpPoolManagerModal = ({ isOpen, onClose }: IpPoolManagerModalProps) => {
     setError('');
     try {
       const [poolsRes, profilesRes] = await Promise.all([
-        fetch('http://localhost:9494/api/ip-pools', { credentials: 'include' }),
-        fetch('http://localhost:9494/api/pppoe/profiles', { credentials: 'include' })
+        fetch(`${apiUrl}/api/ip-pools`, { credentials: 'include' }),
+        fetch(`${apiUrl}/api/pppoe/profiles`, { credentials: 'include' })
       ]);
       if (!poolsRes.ok || !profilesRes.ok) throw new Error("Gagal memuat data.");
       const poolsData = await poolsRes.json();
@@ -62,7 +62,7 @@ const IpPoolManagerModal = ({ isOpen, onClose }: IpPoolManagerModalProps) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:9494/api/ip-pools', {
+      const res = await fetch(`${apiUrl}/api/ip-pools`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -70,7 +70,7 @@ const IpPoolManagerModal = ({ isOpen, onClose }: IpPoolManagerModalProps) => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      fetchData(); // Refresh data di dalam modal
+      fetchData();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -82,7 +82,7 @@ const IpPoolManagerModal = ({ isOpen, onClose }: IpPoolManagerModalProps) => {
     if (!window.confirm("Yakin ingin menghapus aturan IP Pool ini?")) return;
     setLoading(true);
     try {
-        await fetch(`http://localhost:9494/api/ip-pools/${poolId}`, { method: 'DELETE', credentials: 'include' });
+        await fetch(`${apiUrl}/api/ip-pools/${poolId}`, { method: 'DELETE', credentials: 'include' });
         fetchData();
     } catch (err) {
         setError("Gagal menghapus pool.");

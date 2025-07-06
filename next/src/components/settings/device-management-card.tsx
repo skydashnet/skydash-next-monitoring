@@ -18,14 +18,15 @@ const DeviceManagementCard = () => {
     const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deviceToProcess, setDeviceToProcess] = useState<Device | null>(null);
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     const fetchData = useCallback(async () => {
         if (!user?.workspace_id) return;
         setLoading(true);
         try {
             const [devicesRes, workspaceRes] = await Promise.all([
-                fetch('http://localhost:9494/api/devices', { credentials: 'include' }),
-                fetch('http://localhost:9494/api/workspaces/me', { credentials: 'include' })
+                fetch(`${apiUrl}/api/devices`, { credentials: 'include' }),
+                fetch(`${apiUrl}/api/workspaces/me`, { credentials: 'include' })
             ]);
 
             if (!devicesRes.ok || !workspaceRes.ok) {
@@ -72,7 +73,7 @@ const DeviceManagementCard = () => {
         if (!deviceToProcess?.id) return;
         setIsActionLoading(true);
         try {
-            await fetch(`http://localhost:9494/api/devices/${deviceToProcess.id}`, { 
+            await fetch(`${apiUrl}/api/devices/${deviceToProcess.id}`, { 
                 method: 'DELETE', 
                 credentials: 'include' 
             });
@@ -89,7 +90,7 @@ const DeviceManagementCard = () => {
     const handleSetActive = async (deviceId: number) => {
         setIsActionLoading(true);
         try {
-            await fetch('http://localhost:9494/api/workspaces/set-active-device', {
+            await fetch(`${apiUrl}/api/workspaces/set-active-device`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

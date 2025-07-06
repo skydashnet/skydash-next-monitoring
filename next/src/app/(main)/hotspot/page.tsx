@@ -17,7 +17,8 @@ const HotspotPage = () => {
   const fetchSummary = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:9494/api/hotspot/summary', { credentials: 'include' });
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const res = await fetch(`${apiUrl}/api/hotspot/summary`, { credentials: 'include' });
       if (!res.ok) throw new Error("Gagal mengambil summary hotspot.");
       const data = await res.json();
       setSummary(data);

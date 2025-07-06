@@ -21,7 +21,8 @@ const SecurityCard = () => {
         setError('');
         setSuccess('');
         try {
-            const res = await fetch('http://localhost:9494/api/user/change-password', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+            const res = await fetch(`${apiUrl}/api/user/change-password`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

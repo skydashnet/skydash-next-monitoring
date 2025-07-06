@@ -16,6 +16,7 @@ const AddHotspotUserModal = ({ isOpen, onClose, onSuccess }: AddHotspotUserModal
   const [profiles, setProfiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     if (isOpen) {
@@ -25,7 +26,7 @@ const AddHotspotUserModal = ({ isOpen, onClose, onSuccess }: AddHotspotUserModal
 
       const fetchProfiles = async () => {
         try {
-          const res = await fetch('http://localhost:9494/api/hotspot/profiles', { credentials: 'include' });
+          const res = await fetch(`${apiUrl}/api/hotspot/profiles`, { credentials: 'include' });
           if (!res.ok) throw new Error("Gagal memuat profil hotspot.");
           const data = await res.json();
           setProfiles(data);
@@ -51,7 +52,7 @@ const AddHotspotUserModal = ({ isOpen, onClose, onSuccess }: AddHotspotUserModal
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:9494/api/hotspot/users', {
+      const res = await fetch(`${apiUrl}/api/hotspot/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

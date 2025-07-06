@@ -13,7 +13,7 @@ const ProfileCard = () => {
   const [loading, setLoading] = useState(false);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ const ProfileCard = () => {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:9494/api/user/details', {
+      const res = await fetch(`${apiUrl}/api/user/details`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -61,7 +61,7 @@ const ProfileCard = () => {
     formData.append('avatar', croppedBlob, 'avatar.png');
 
     try {
-      await fetch('http://localhost:9494/api/user/avatar', {
+      await fetch(`${apiUrl}/api/user/avatar`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -86,7 +86,7 @@ const ProfileCard = () => {
           <CardContent className="space-y-6">
             <div className="flex items-center gap-6">
               <div className="relative">
-                <img src={user?.profile_picture_url ? `http://localhost:9494${user.profile_picture_url}?t=${new Date().getTime()}` : ''} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-4 border-card shadow-md"/>
+                <img src={user?.profile_picture_url ? `${apiUrl}${user.profile_picture_url}?t=${new Date().getTime()}` : ''} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-4 border-card shadow-md"/>
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*"/>
                 <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-primary hover:bg-primary/90 text-primary-foreground p-2 rounded-full shadow-md border-2 border-card">
                   <Camera size={16} />

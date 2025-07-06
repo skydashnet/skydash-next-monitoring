@@ -34,11 +34,12 @@ const PppoeSecretsTable = ({ refreshTrigger, onActionComplete, initialFilter = '
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [secretToEdit, setSecretToEdit] = useState<PppoeSecret | null>(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const fetchSecrets = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:9494/api/pppoe/secrets', { credentials: 'include' });
+      const response = await fetch(`${apiUrl}/api/pppoe/secrets`, { credentials: 'include' });
       if (!response.ok) throw new Error('Gagal mengambil daftar secret.');
       const data = await response.json();
       setAllSecrets(data);
@@ -75,11 +76,11 @@ const PppoeSecretsTable = ({ refreshTrigger, onActionComplete, initialFilter = '
             const activeUser = pppoeActive.find((u: any) => u.name === secret.name);
             if(!activeUser || !activeUser['.id']) throw new Error("User tidak aktif, tidak bisa di-kick.");
             const encodedId = encodeURIComponent(activeUser['.id']);
-            url = `http://localhost:9494/api/pppoe/active/${encodedId}/kick`;
+            url = `${apiUrl}/api/pppoe/active/${encodedId}/kick`;
             options.method = 'POST';
         } else {
             const encodedId = encodeURIComponent(secret['.id']);
-            url = `http://localhost:9494/api/pppoe/secrets/${encodedId}/status`;
+            url = `${apiUrl}/api/pppoe/secrets/${encodedId}/status`;
             options.method = 'PUT';
             options.headers = { 'Content-Type': 'application/json' };
             options.body = JSON.stringify({ disabled: action === 'disable' ? 'yes' : 'no' });
@@ -108,7 +109,7 @@ const PppoeSecretsTable = ({ refreshTrigger, onActionComplete, initialFilter = '
     setIsActionLoading(true);
     try {
         const encodedId = encodeURIComponent(secretToDelete['.id']);
-        await fetch(`http://localhost:9494/api/pppoe/secrets/${encodedId}`, { method: 'DELETE', credentials: 'include' });
+        await fetch(`${apiUrl}/api/pppoe/secrets/${encodedId}`, { method: 'DELETE', credentials: 'include' });
         onActionComplete();
     } catch (error) {
         alert("Gagal menghapus secret.");

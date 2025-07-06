@@ -22,12 +22,13 @@ const AddConnectionModal = ({ isOpen, onClose, onSuccess, asset }: AddConnection
   const [selectedSecret, setSelectedSecret] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
       setError('');
-      fetch('http://localhost:9494/api/assets/unconnected-pppoe-users', { credentials: 'include' })
+      fetch(`${apiUrl}/api/assets/unconnected-pppoe-users`, { credentials: 'include' })
         .then(res => {
           if (!res.ok) throw new Error('Gagal memuat daftar user.');
           return res.json();
@@ -53,7 +54,7 @@ const AddConnectionModal = ({ isOpen, onClose, onSuccess, asset }: AddConnection
     setError('');
 
     try {
-      const res = await fetch(`http://localhost:9494/api/assets/${asset.id}/connections`, {
+      const res = await fetch(`${apiUrl}/api/assets/${asset.id}/connections`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -15,7 +15,8 @@ const DangerZoneCard = () => {
     const handleConfirmDelete = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:9494/api/user', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+            const res = await fetch(`${apiUrl}/api/user`, {
                 method: 'DELETE',
                 credentials: 'include',
             });

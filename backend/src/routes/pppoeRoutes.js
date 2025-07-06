@@ -13,6 +13,7 @@ router.get('/next-ip', pppoeController.getNextIp);
 router.put('/secrets/:id/status', pppoeController.setSecretStatus);
 router.post('/active/:id/kick', pppoeController.kickActiveUser);
 router.get('/secrets/:name/sla', pppoeController.getSlaDetails);
+router.get('/secrets/:name/usage', pppoeController.getUsageHistory);
 router.route('/secrets/:id')
     .put(pppoeController.updateSecret)
     .delete(pppoeController.deleteSecret);

@@ -35,7 +35,7 @@ const Header = () => {
             <div className="relative">
                 <button onClick={() => setIsDropdownOpen(prev => !prev)} className="p-1.5 rounded-full hover:bg-secondary">
                     <img 
-                      src={user?.profile_picture_url ? `http://localhost:9494${user.profile_picture_url}` : `https://api.dicebear.com/8.x/initials/svg?seed=SN`}
+                      src={user?.profile_picture_url ? `${process.env.NEXT_PUBLIC_API_BASE_URL}${user.profile_picture_url}` : `https://api.dicebear.com/8.x/initials/svg?seed=SN`}
                       alt="User Avatar"
                       className="w-9 h-9 rounded-full object-cover"
                     />

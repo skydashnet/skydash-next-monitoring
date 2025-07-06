@@ -61,9 +61,10 @@ const DeviceModal = ({ isOpen, onClose, onSuccess, deviceToEdit }: DeviceModalPr
     setLoading(true);
     setError('');
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
     const url = isEditMode
-        ? `http://localhost:9494/api/devices/${deviceToEdit?.id}`
-        : 'http://localhost:9494/api/devices';
+        ? `${apiUrl}/api/devices/${deviceToEdit?.id}`
+        : `${apiUrl}/api/devices`;
     
     const method = isEditMode ? 'PUT' : 'POST';
 

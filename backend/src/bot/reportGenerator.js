@@ -10,6 +10,12 @@ const formatDataSize = (bytes) => {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
+const formatPeakBandwidth = (bytesPerMinute) => {
+    if (!+bytesPerMinute || bytesPerMinute < 0) return '0 Mbps';
+    const mbps = (bytesPerMinute * 8) / 60 / 1000000;
+    return `${mbps.toFixed(2)} Mbps`;
+};
+
 async function generateSingleReport(workspace) {
     console.log(`[Laporan Harian] Memproses workspace: ${workspace.name} (ID: ${workspace.id})`);
     try {
@@ -17,28 +23,24 @@ async function generateSingleReport(workspace) {
             console.log(`[Laporan Harian] Melewatkan workspace ${workspace.id} karena tidak ada main_interface.`);
             return;
         }
+
         const twentyFourHoursAgo = new Date();
         twentyFourHoursAgo.setDate(twentyFourHoursAgo.getDate() - 1);
         const [usageResult] = await pool.query(
-            'SELECT SUM(tx_usage) as total_tx, SUM(rx_usage) as total_rx FROM traffic_logs WHERE workspace_id = ? AND interface_name = ? AND timestamp >= ?',
+            'SELECT SUM(tx_usage + rx_usage) as total_usage FROM traffic_logs WHERE workspace_id = ? AND interface_name = ? AND timestamp >= ?',
             [workspace.id, workspace.main_interface, twentyFourHoursAgo]
         );
-        
-        let totalDataUsed = '0 B';
-        if (usageResult.length > 0 && usageResult[0].total_tx) {
-            totalDataUsed = formatDataSize(parseInt(usageResult[0].total_tx) + parseInt(usageResult[0].total_rx));
-        }
-
+        const totalDataUsed = (usageResult.length > 0) ? formatDataSize(usageResult[0].total_usage) : '0 B';
         const [peakData] = await pool.query(
-            `SELECT (active_users_pppoe + active_users_hotspot) as total_users, HOUR(timestamp) as peak_hour
+            `SELECT (tx_usage + rx_usage) as peak_usage, (active_users_pppoe + active_users_hotspot) as users_at_peak, HOUR(timestamp) as peak_hour
              FROM traffic_logs WHERE workspace_id = ? AND interface_name = ? AND timestamp >= ?
-             ORDER BY total_users DESC LIMIT 1`,
+             ORDER BY peak_usage DESC LIMIT 1`,
             [workspace.id, workspace.main_interface, twentyFourHoursAgo]
         );
         
         const peakHour = peakData.length > 0 ? `${peakData[0].peak_hour}:00` : 'N/A';
-        const peakUsers = peakData.length > 0 ? peakData[0].total_users : 0;
-        
+        const usersAtPeak = peakData.length > 0 ? peakData[0].users_at_peak : 0;
+        const peakBandwidth = peakData.length > 0 ? formatPeakBandwidth(peakData[0].peak_usage) : '0 Mbps';
         const [snapshotPppoe, snapshotHotspot] = await Promise.all([
             runCommandForWorkspace(workspace.id, '/ppp/active/print').then(r => r.length),
             runCommandForWorkspace(workspace.id, '/ip/hotspot/active/print').then(r => r.length)
@@ -51,8 +53,8 @@ async function generateSingleReport(workspace) {
         report += `Berikut adalah analisis jaringan untuk *${workspace.name}*:\n\n`;
         report += `*📊 Analisis 24 Jam Terakhir:*\n`;
         report += `> Total Data Terpakai: *${totalDataUsed}*\n`;
-        report += `> Puncak Aktivitas: sekitar jam *${peakHour}*\n`;
-        report += `> dengan *${peakUsers}* pengguna terhubung\n\n`;
+        report += `> Puncak Bandwidth: *${peakBandwidth}* (sekitar jam ${peakHour})\n`;
+        report += `> dengan *${usersAtPeak}* pengguna terhubung\n\n`;
         report += `*📊 Snapshot Saat Ini:*\n`;
         report += `> PPPoE Aktif: *${snapshotPppoe}* pengguna\n`;
         report += `> Hotspot Aktif: *${snapshotHotspot}* pengguna\n\n`;

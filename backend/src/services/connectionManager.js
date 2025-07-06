@@ -1,33 +1,42 @@
 const workspaceConnections = new Map();
 
-/**
- * @param {number} workspaceId 
- * @returns {object | undefined}
- */
+const DEFAULT_IDLE_TIMEOUT = 5 * 60 * 1000;
+
+function setIdleTimeout(workspaceId, connection, timeout) {
+    if (connection.idleTimer) {
+        clearTimeout(connection.idleTimer);
+    }
+    connection.idleTimer = setTimeout(() => {
+        console.log(`[Connection Manager] Menutup koneksi idle untuk workspace ${workspaceId} setelah ${timeout/1000} detik.`);
+        if (connection.client && connection.client.connected) {
+            connection.client.close();
+        }
+        workspaceConnections.delete(workspaceId);
+    }, timeout);
+}
+
 const getConnection = (workspaceId) => {
-    return workspaceConnections.get(workspaceId);
+    const conn = workspaceConnections.get(workspaceId);
+    if (conn) {
+        setIdleTimeout(workspaceId, conn, conn.timeout || DEFAULT_IDLE_TIMEOUT);
+    }
+    return conn;
 };
 
-/**
- * @param {number} workspaceId 
- * @param {object} connectionData
- */
-const addConnection = (workspaceId, connectionData) => {
-    const dataWithUserCount = { ...connectionData, userCount: 0 };
-    workspaceConnections.set(workspaceId, dataWithUserCount);
-    console.log(`[Connection Manager] Koneksi untuk workspace ${workspaceId} berhasil didaftarkan.`);
+const addConnection = (workspaceId, connectionData, timeout = DEFAULT_IDLE_TIMEOUT) => {
+    const conn = { ...connectionData, timeout };
+    setIdleTimeout(workspaceId, conn, timeout);
+    workspaceConnections.set(workspaceId, conn);
+    console.log(`[Connection Manager] Koneksi untuk workspace ${workspaceId} didaftarkan dengan timeout ${timeout/1000} detik.`);
 };
 
-/**
- * @param {number} workspaceId 
- */
 const removeConnection = (workspaceId) => {
     const connection = workspaceConnections.get(workspaceId);
     if (connection) {
         console.log(`[Connection Manager] Menghapus koneksi untuk workspace ID: ${workspaceId}`);
-        clearInterval(connection.resourceIntervalId);
-        if (connection.trafficClient && connection.trafficClient.connected) {
-            connection.trafficClient.close().catch(err => console.error("Error saat menutup koneksi:", err));
+        clearTimeout(connection.idleTimer);
+        if (connection.client && connection.client.connected) {
+            connection.client.close().catch(err => console.error("Error saat menutup koneksi:", err));
         }
         workspaceConnections.delete(workspaceId);
     }
@@ -36,5 +45,5 @@ const removeConnection = (workspaceId) => {
 module.exports = {
     getConnection,
     addConnection,
-    removeConnection
+    removeConnection,
 };

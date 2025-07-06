@@ -184,3 +184,30 @@ exports.deleteSecret = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+exports.getUsageHistory = async (req, res) => {
+    const { name } = req.params;
+    const workspaceId = req.user.workspace_id;
+
+    const query = `
+        SELECT 
+            SUM(CASE WHEN usage_date >= CURDATE() THEN total_bytes ELSE 0 END) as daily,
+            SUM(CASE WHEN usage_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN total_bytes ELSE 0 END) as weekly,
+            SUM(CASE WHEN usage_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN total_bytes ELSE 0 END) as monthly
+        FROM pppoe_usage_logs
+        WHERE workspace_id = ? AND pppoe_user = ? AND usage_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY);
+    `;
+
+    try {
+        const [results] = await pool.query(query, [workspaceId, name]);
+        const usage = {
+            daily: results[0].daily || 0,
+            weekly: results[0].weekly || 0,
+            monthly: results[0].monthly || 0,
+        };
+        res.json(usage);
+    } catch (error) {
+        console.error(`Error getting usage history for ${name}:`, error);
+        res.status(500).json({ message: 'Gagal mengambil riwayat pemakaian.' });
+    }
+};

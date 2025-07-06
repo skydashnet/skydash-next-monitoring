@@ -20,8 +20,6 @@ exports.requestRegisterOtp = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
         const otp = generateOtp();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-        // Simpan data pendaftaran sementara
         await pool.query(
             `INSERT INTO pending_registrations (whatsapp_number, username, display_name, password_hash, otp_code, expires_at) VALUES (?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE username=VALUES(username), display_name=VALUES(display_name), password_hash=VALUES(password_hash), otp_code=VALUES(otp_code), expires_at=VALUES(expires_at)`,

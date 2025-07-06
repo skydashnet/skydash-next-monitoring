@@ -111,10 +111,17 @@ Follow these instructions to get a copy of the project up and running on your lo
     ```
     The application will be accessible at `http://localhost:3000`.
 
-For more Guide. please visit wiki at (https://github.com/skydashnet/skydash-next-monitoring/wiki)
-
 ---
+### 📚 Documentation
 
+For a more in-depth guide on configuration, architecture, and feature usage, please visit the **[Skydash.NET Project Wiki](https://github.com/skydashnet/skydash-next-monitoring/wiki)**.
+
+The wiki contains detailed information on:
+* Database Schema
+* MikroTik Script Configuration
+* Feature Workflows
+* And much more.
+    
 ### 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/skydashnet/skydash-next-monitoring/issues).

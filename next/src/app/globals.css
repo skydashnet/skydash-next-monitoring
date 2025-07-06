@@ -86,3 +86,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) hsl(var(--background));
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background-color: hsl(var(--background));
+    border-radius: 10px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted));
+    border-radius: 10px;
+    border: 2px solid hsl(var(--background));
+  }
+  
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--secondary));
+  }
+}

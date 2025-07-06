@@ -20,6 +20,7 @@ if (RouterOSAPI.RouterOSAPI) {
 
 const pool = require('./src/config/database');
 const { addConnection, removeConnection, getConnection } = require('./src/services/connectionManager');
+const { getOrCreateConnection } = require('./src/utils/apiConnection');
 
 const authRoutes = require('./src/routes/authRoutes');
 const userRoutes = require('./src/routes/userRoutes');
@@ -34,12 +35,12 @@ const workspaceRoutes = require('./src/routes/workspaceRoutes');
 const deviceRoutes = require('./src/routes/deviceRoutes');
 const ipPoolRoutes = require('./src/routes/ipPoolRoutes');
 const botRoutes = require('./src/routes/botRoutes');
+const slaRoutes = require('./src/routes/slaRoutes');
 
 const app = express();
 const server = http.createServer(app);
 
-app.use(helmet());
-
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
@@ -58,6 +59,7 @@ app.use('/api/workspaces', workspaceRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/ip-pools', ipPoolRoutes);
 app.use('/api/bot', botRoutes);
+app.use('/api/sla', slaRoutes);
 
 const wss = new WebSocket.Server({ server, path: "/ws" });
 
@@ -69,33 +71,26 @@ function broadcastToWorkspace(workspaceId, data) {
     });
 }
 
-function stopWorkspaceMonitoring(workspaceId) {
-    const connection = getConnection(workspaceId);
+function stopWorkspaceMonitoring(connectionKey) {
+    const connection = getConnection(connectionKey);
     if (connection) {
         clearInterval(connection.intervalId);
-        if (connection.client && connection.client.connected) connection.client.close();
-        removeConnection(workspaceId);
+        removeConnection(connectionKey);
     }
 }
 
-async function startWorkspaceMonitoring(workspaceId) {
-    if (getConnection(workspaceId)?.client?.connected) return;
+async function startWorkspaceMonitoring(workspaceId, connectionKey) {
+    if (getConnection(connectionKey)?.client?.connected) return;
     
     let client;
     try {
-        const [workspaces] = await pool.query('SELECT active_device_id FROM workspaces WHERE id = ?', [workspaceId]);
-        if (!workspaces[0]?.active_device_id) return;
-        
-        const [devices] = await pool.query('SELECT * FROM mikrotik_devices WHERE id = ?', [workspaces[0].active_device_id]);
-        if (devices.length === 0) return;
-        
-        const device = devices[0];
-        client = new RouterOSAPI({ host: device.host, user: device.user, password: device.password || '', port: device.port, keepalive: true });
-        
-        await client.connect();
+        const WS_TIMEOUT = 24 * 60 * 60 * 1000;
+        client = await getOrCreateConnection(workspaceId, WS_TIMEOUT, connectionKey);
 
         const runMonitoringCycle = async () => {
-            if (!client?.connected) return stopWorkspaceMonitoring(workspaceId);
+            if (!client?.connected) {
+                return stopWorkspaceMonitoring(connectionKey);
+            }
             try {
                 const [resource, pppoeActive, hotspotActive, allInterfaces] = await Promise.all([
                     client.write('/system/resource/print').then(r => r[0] || {}),
@@ -122,12 +117,16 @@ async function startWorkspaceMonitoring(workspaceId) {
                 broadcastToWorkspace(workspaceId, { type: 'batch-update', payload: batchPayload });
                 
             } catch (cycleError) {
-                stopWorkspaceMonitoring(workspaceId);
+                console.error(`[WS Cycle Error] Workspace ${workspaceId}:`, cycleError.message);
+                stopWorkspaceMonitoring(connectionKey);
             }
         };
 
-        const intervalId = setInterval(runMonitoringCycle, 2000); 
-        addConnection(workspaceId, { client, intervalId, userCount: 0 });
+        const intervalId = setInterval(runMonitoringCycle, 2000);
+        const connection = getConnection(connectionKey);
+        if (connection) {
+            connection.intervalId = intervalId;
+        }
 
     } catch (connectError) {
         if (client?.connected) client.close();
@@ -145,18 +144,25 @@ wss.on('connection', async (ws, req) => {
         if (!users[0]?.workspace_id) return ws.close();
 
         ws.workspaceId = users[0].workspace_id;
-        
-        let connection = getConnection(ws.workspaceId);
+        const connectionKey = `ws-${ws.workspaceId}`;
+
+        let connection = getConnection(connectionKey);
         if (!connection) {
-            await startWorkspaceMonitoring(ws.workspaceId);
-            connection = getConnection(ws.workspaceId);
+            await startWorkspaceMonitoring(ws.workspaceId, connectionKey);
+            connection = getConnection(connectionKey);
         }
-        if (connection) connection.userCount = (connection.userCount || 0) + 1;
+
+        if (connection) {
+            connection.userCount = (connection.userCount || 0) + 1;
+        }
         
         ws.on('close', () => {
-            if (ws.workspaceId && connection) {
-                connection.userCount--;
-                if (connection.userCount <= 0) stopWorkspaceMonitoring(ws.workspaceId);
+            const currentConnection = getConnection(connectionKey);
+            if (currentConnection) {
+                currentConnection.userCount--;
+                if (currentConnection.userCount <= 0) {
+                    stopWorkspaceMonitoring(connectionKey);
+                }
             }
         });
     } catch (error) {
@@ -165,11 +171,9 @@ wss.on('connection', async (ws, req) => {
 });
 
 const PORT = process.env.PORT || 9494;
-server.listen(PORT, () => {
-    console.log(`Server backend berjalan di port ${PORT}`);
-    
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server backend berjalan di port ${PORT} dan terbuka untuk jaringan`);
     cron.schedule('* * * * *', logAllActiveWorkspaces);
-
     cron.schedule('0 0 * * *', generateAndSendDailyReports, {
         timezone: "Asia/Jakarta"
     });
