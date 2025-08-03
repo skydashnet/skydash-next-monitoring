@@ -8,6 +8,8 @@ on:
 jobs:
   update_readme_job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
