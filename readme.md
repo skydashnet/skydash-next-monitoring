@@ -13,6 +13,9 @@
     <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
   </a>
 </p>
+<p align="center">
+  <em>Last checked for updates on: N/A</em>
+</p>
 
 Skydash.NET is a full-stack application designed to provide an intuitive and powerful interface for managing MikroTik devices. It combines a real-time monitoring dashboard with comprehensive management tools for PPPoE, Hotspot, and network assets, enhanced with an interactive WhatsApp bot for on-the-go management.
 
