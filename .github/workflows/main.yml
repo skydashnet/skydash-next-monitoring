@@ -14,7 +14,7 @@ jobs:
       - name: Update timestamp in README.md
         run: |
           TIMESTAMP=$(date -u +"%A, %d %B %Y, %H:%M:%S %Z")
-          sed -i "s|.*|\n    <em>Last checked for updates on: **${TIMESTAMP}**</em>\n    |" README.md
+          sed -i "s|.*|\n    <em>Last checked for updates on: **${TIMESTAMP}**</em>\n    |" readme.md
       - name: Commit and push if there are changes
         run: |
           git config --global user.name 'github-actions[bot]'
