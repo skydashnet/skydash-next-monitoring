@@ -1,18 +1,11 @@
 # SKYDASHNET MONITORING TOOLS
 <h3 align="center">A modern, web-based dashboard for monitoring and managing MikroTik routers.</h3>
 
-<p align="center">
-    <a href="https://github.com/skydashnet/skydash-next-monitoring/blob/main/LICENSE">
-        <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-    </a>
-    <a href="#">
-        <img src="https://img.shields.io/badge/version-1.5.8-green.svg" alt="Version">
-    </a>
-</p>
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/skydashnet/skydash-next-monitoring.svg)](https://github.com/skydashnet/skydash-next-monitoring/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/skydashnet/skydash-next-monitoring.svg)](https://github.com/skydashnet/skydash-next-monitoring/network)
+![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=skydashnet.skydash-next-monitoring&right_color=red)
 
-<p align="center">
-<em>Last checked for updates on: N/A</em>
-</p>
 
 Skydash.NET is a full-stack application designed to provide an intuitive and powerful interface for managing MikroTik devices. It combines a real-time monitoring dashboard with comprehensive management tools for PPPoE, Hotspot, and network assets, enhanced with an interactive WhatsApp bot for on-the-go management.
 
